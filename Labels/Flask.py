@@ -4,10 +4,33 @@ from fpdf import FPDF
 import os
 import shutil
 import secrets
+import re
 
 def main(email, password, date):
-    
+
     pdf = FPDF("P", "mm", (100, 192))
+
+    def remove_emojis(text):
+    # This regex pattern matches emojis based on Unicode ranges
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"  # Emoticons
+            "\U0001F300-\U0001F5FF"  # Symbols & Pictographs
+            "\U0001F680-\U0001F6FF"  # Transport & Map Symbols
+            "\U0001F700-\U0001F77F"  # Alchemical Symbols
+            "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+            "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+            "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+            "\U0001FA00-\U0001FA6F"  # Chess Symbols
+            "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+            "\U00002702-\U000027B0"  # Dingbats
+            "\U000024C2-\U0001F251"  # Enclosed characters
+            "]+",
+            flags=re.UNICODE
+    )
+    # Substitute emojis with an empty string
+        return emoji_pattern.sub(r'', text)
+
 
     def lengthcheck(input_string, max_length=30):
         # Check if the length of the string is more than max_length
@@ -59,7 +82,7 @@ def main(email, password, date):
         pdf.cell(0, spacing, address, ln=1)
         pdf.cell(0, spacing, f"{postnummer} {city}", ln=1)
 
- 
+
         place = place.split(":")
         place[0] = place[0] + ":"
         for i in place:
@@ -89,7 +112,6 @@ def main(email, password, date):
 
     print("Main has been called with:")
     print(email)
-    print(password)
     print(date)
 
     # Authentication
@@ -193,6 +215,7 @@ def main(email, password, date):
         city = cities[index]
         content = contents[index]
         place = places[index].lstrip()
+        place = remove_emojis(place)
         #"""(ordercount, name, ordernumber, address, postnummer, city, content, place)"""
         nextpage(ordercount, name, ordernumber, address, postnumber, city,
                  content, place)
@@ -218,7 +241,7 @@ def main(email, password, date):
     print("Done")
     return True
 global dirused
-dirused = "/home/oliver/Documents/Coding/savedprojects/Python/Testfolder/uploads"
+dirused = "/home/maetmeals/labels/uploads/"
 app = Flask(__name__)
 UPLOAD_FOLDER = dirused
 app.secret_key = secrets.token_hex(16)
@@ -245,7 +268,7 @@ def login():
     date = request.form.get('date')
 
 
-    print(f"Received email: {email}, password: {password}, date: {date}")
+
     date = date.split("-")
     day = int(date[2])
     day = day - 1
@@ -254,7 +277,6 @@ def login():
 
     print("Calling main \n")
     check = main(email, password, date)
-    print(f"Main returned: {check}")
     if check == 401:
         flash('Username or password is incorrect')
         return redirect(url_for('index'))
@@ -270,7 +292,3 @@ def login():
 def upload():
     return render_template('upload.html')
 
-
-
-
-app.run()
